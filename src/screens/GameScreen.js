@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   Alert,
   Keyboard,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGame, gameSelectors } from '../context/GameContext';
@@ -20,6 +22,8 @@ const GameScreen = ({ navigation }) => {
   const { state, dispatch, actions } = useGame();
   const [userAnswer, setUserAnswer] = useState('');
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const scrollViewRef = useRef(null);
 
   const currentPlayer = gameSelectors.getCurrentPlayer(state);
   const currentHint = gameSelectors.getCurrentHint(state);
@@ -35,6 +39,29 @@ const GameScreen = ({ navigation }) => {
       });
     }
   }, [state.gameMode, state.gameType, state.gameStarted]);
+
+  // Keyboard listeners
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      () => {
+        setKeyboardVisible(true);
+        // Scroll to bottom when keyboard shows
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => setKeyboardVisible(false)
+    );
+
+    return () => {
+      keyboardDidShowListener?.remove();
+      keyboardDidHideListener?.remove();
+    };
+  }, []);
 
   // Limpar feedback após alguns segundos
   useEffect(() => {
@@ -117,7 +144,11 @@ const GameScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={[globalStyles.safeArea, { paddingTop: Math.max(insets.top, spacing.md) }]}>
-      <View style={styles.container}>
+      <KeyboardAvoidingView 
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
@@ -154,7 +185,16 @@ const GameScreen = ({ navigation }) => {
         </View>
 
         {/* Game Content */}
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          ref={scrollViewRef}
+          style={styles.content} 
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[
+            styles.scrollContent,
+            keyboardVisible && styles.scrollContentKeyboard
+          ]}
+        >
           {/* Hint Card */}
           <View style={styles.hintCard}>
             <View style={styles.hintHeader}>
@@ -174,7 +214,8 @@ const GameScreen = ({ navigation }) => {
           {state.feedback && (
             <View style={[
               styles.feedbackCard,
-              state.feedback.type === 'success' ? styles.successFeedback : styles.errorFeedback
+              state.feedback.type === 'success' ? styles.successFeedback : styles.errorFeedback,
+              keyboardVisible && styles.feedbackKeyboard
             ]}>
               <Text style={[
                 styles.feedbackText,
@@ -197,7 +238,13 @@ const GameScreen = ({ navigation }) => {
         </ScrollView>
 
         {/* Input and Actions */}
-        <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
+        <View style={[
+          styles.inputContainer, 
+          { 
+            paddingBottom: Math.max(insets.bottom, spacing.md),
+            minHeight: keyboardVisible ? 120 : 100 
+          }
+        ]}>
           {!state.showExplanation ? (
             <>
               {/* Answer Input */}
@@ -210,7 +257,13 @@ const GameScreen = ({ navigation }) => {
                   placeholder="Digite sua resposta..."
                   value={userAnswer}
                   onChangeText={setUserAnswer}
-                  onFocus={() => setIsInputFocused(true)}
+                  onFocus={() => {
+                    setIsInputFocused(true);
+                    // Scroll to input when focused
+                    setTimeout(() => {
+                      scrollViewRef.current?.scrollToEnd({ animated: true });
+                    }, 300);
+                  }}
                   onBlur={() => setIsInputFocused(false)}
                   onSubmitEditing={handleSubmitAnswer}
                   returnKeyType="done"
@@ -256,7 +309,7 @@ const GameScreen = ({ navigation }) => {
             </TouchableOpacity>
           )}
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -269,7 +322,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: colors.background,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl, // Increased from spacing.md to give more space from top
+    paddingTop: spacing.xl,
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -278,42 +331,42 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md, // Increased spacing
+    marginBottom: spacing.md,
   },
   exitButton: {
-    width: 36, // Increased from 32
-    height: 36, // Increased from 32
-    borderRadius: 18, // Adjusted for new size
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: colors.error,
     alignItems: 'center',
     justifyContent: 'center',
   },
   exitButtonText: {
     color: colors.textLight,
-    fontSize: 20, // Increased from 18
+    fontSize: 20,
     fontWeight: 'bold',
   },
   progressContainer: {
     backgroundColor: colors.backgroundAlt,
-    paddingHorizontal: spacing.lg, // Increased from spacing.md
-    paddingVertical: spacing.sm, // Increased from spacing.xs
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
     borderRadius: borderRadius.round,
   },
   progressText: {
-    fontSize: 16, // Increased from caption size (14)
-    fontWeight: '700', // Increased from '600'
-    color: colors.text, // Changed from textSecondary for better visibility
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
   },
   scoreContainer: {
     backgroundColor: colors.primary,
-    paddingHorizontal: spacing.lg, // Increased from spacing.md
-    paddingVertical: spacing.sm, // Increased from spacing.xs
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
     borderRadius: borderRadius.round,
   },
   scoreText: {
-    fontSize: 16, // Increased from caption size (14)
+    fontSize: 16,
     color: colors.textLight,
-    fontWeight: '700', // Increased from '600'
+    fontWeight: '700',
   },
   playerInfo: {
     alignItems: 'center',
@@ -339,6 +392,13 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: spacing.lg,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: spacing.xl,
+  },
+  scrollContentKeyboard: {
+    paddingBottom: spacing.xxl * 2,
   },
   hintCard: {
     backgroundColor: colors.background,
@@ -370,6 +430,9 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginTop: spacing.md,
+  },
+  feedbackKeyboard: {
+    marginBottom: spacing.lg,
   },
   successFeedback: {
     backgroundColor: colors.secondary + '20',
