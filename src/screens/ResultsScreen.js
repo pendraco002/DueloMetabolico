@@ -25,23 +25,27 @@ const ResultsScreen = ({ navigation }) => {
   const getPlayerStats = () => {
     if (state.gameMode === 'individual') {
       return [{
-        name: currentPlayer,
-        score: totalScore,
-        correct: correctAnswers,
-        total: totalCards,
-        accuracy: accuracyRate,
+        name: currentPlayer || 'Jogador',
+        score: totalScore || 0,
+        correct: correctAnswers || 0,
+        total: totalCards || 0,
+        accuracy: accuracyRate || 0,
       }];
     }
 
+    if (!state.players || !Array.isArray(state.players) || state.players.length === 0) {
+      return [];
+    }
+
     return state.players.map(player => {
-      const playerHistory = state.gameHistory.filter(h => h.player === player);
+      const playerHistory = (state.gameHistory || []).filter(h => h.player === player);
       const playerCorrect = playerHistory.filter(h => h.isCorrect).length;
       const playerTotal = playerHistory.length;
       const playerAccuracy = playerTotal > 0 ? Math.round((playerCorrect / playerTotal) * 100) : 0;
 
       return {
         name: player,
-        score: state.scores[player] || 0,
+        score: (state.scores && state.scores[player]) || 0,
         correct: playerCorrect,
         total: playerTotal,
         accuracy: playerAccuracy,
@@ -50,9 +54,9 @@ const ResultsScreen = ({ navigation }) => {
   };
 
   const playerStats = getPlayerStats();
-  const winner = playerStats.reduce((prev, current) => 
+  const winner = playerStats.length > 0 ? playerStats.reduce((prev, current) =>
     prev.score > current.score ? prev : current
-  );
+  ) : null;
 
   const handlePlayAgain = () => {
     dispatch({ type: actions.RESET_GAME });
@@ -67,9 +71,9 @@ const ResultsScreen = ({ navigation }) => {
   const renderStatCard = ({ item: player }) => (
     <View style={[
       styles.statCard,
-      player.name === winner.name && styles.winnerCard
+      winner && player.name === winner.name && styles.winnerCard
     ]}>
-      {player.name === winner.name && state.gameMode === 'dupla' && (
+      {winner && player.name === winner.name && state.gameMode === 'dupla' && (
         <View style={styles.winnerBadge}>
           <Text style={styles.winnerBadgeText}>🏆 Vencedor</Text>
         </View>
@@ -100,7 +104,7 @@ const ResultsScreen = ({ navigation }) => {
     <View style={styles.historyItem}>
       <View style={styles.historyHeader}>
         <Text style={styles.historyQuestion}>
-          {index + 1}. {item.question}
+          {index + 1}. {item.question || 'Pergunta não disponível'}
         </Text>
         <View style={[
           styles.historyBadge,
@@ -111,18 +115,38 @@ const ResultsScreen = ({ navigation }) => {
           </Text>
         </View>
       </View>
-      
+
       <View style={styles.historyDetails}>
         <Text style={styles.historyAnswer}>
-          Sua resposta: {item.userAnswer}
+          Sua resposta: {item.userAnswer || 'Não respondido'}
         </Text>
         <Text style={styles.historyMeta}>
-          {item.hintsUsed} dicas • {item.points} pontos
-          {state.gameMode === 'dupla' && ` • ${item.player}`}
+          {(item.hintsUsed || 0)} dicas • {(item.points || 0)} pontos
+          {state.gameMode === 'dupla' && item.player && ` • ${item.player}`}
         </Text>
       </View>
     </View>
   );
+
+  // Safety check - if no game data, show error message
+  if (!state.gameStarted && !state.gameFinished) {
+    return (
+      <SafeAreaView style={globalStyles.safeArea}>
+        <View style={[globalStyles.centerContent, { padding: spacing.lg }]}>
+          <Text style={globalStyles.title}>Erro</Text>
+          <Text style={[globalStyles.body, { textAlign: 'center', marginVertical: spacing.md }]}>
+            Não há dados de jogo disponíveis. Por favor, inicie um novo jogo.
+          </Text>
+          <TouchableOpacity
+            style={globalStyles.button}
+            onPress={handleGoHome}
+          >
+            <Text style={globalStyles.buttonText}>Voltar ao Menu</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={globalStyles.safeArea}>
@@ -163,7 +187,7 @@ const ResultsScreen = ({ navigation }) => {
               </View>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Cartas Completadas:</Text>
-                <Text style={styles.summaryValue}>{state.gameHistory.length}</Text>
+                <Text style={styles.summaryValue}>{(state.gameHistory || []).length}</Text>
               </View>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Modo de Jogo:</Text>
@@ -185,9 +209,9 @@ const ResultsScreen = ({ navigation }) => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>📝 Histórico de Respostas</Text>
             <FlatList
-              data={state.gameHistory}
+              data={state.gameHistory || []}
               renderItem={renderGameHistoryItem}
-              keyExtractor={(item, index) => `${item.cardId}-${index}`}
+              keyExtractor={(item, index) => `${item.cardId || index}-${index}`}
               scrollEnabled={false}
             />
           </View>

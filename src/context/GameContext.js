@@ -297,7 +297,10 @@ export const useGame = () => {
 
 // Seletores úteis
 export const gameSelectors = {
-  getCurrentPlayer: (state) => state.players[state.currentPlayerIndex],
+  getCurrentPlayer: (state) => {
+    if (!state.players || state.players.length === 0) return null;
+    return state.players[state.currentPlayerIndex] || null;
+  },
   getTotalScore: (state, player) => {
     // Ensure we have a valid player and scores object
     if (!player || !state.scores || typeof state.scores !== 'object') {
@@ -305,18 +308,34 @@ export const gameSelectors = {
     }
     return state.scores[player] || 0;
   },
-  getTotalScore: (state, player) => state.scores[player] || 0,
-  getCorrectAnswersCount: (state) => state.correctAnswers.length,
-  getTotalCards: (state) => state.cards.length,
+  getCorrectAnswersCount: (state) => {
+    if (!state.correctAnswers || !Array.isArray(state.correctAnswers)) {
+      return 0;
+    }
+    return state.correctAnswers.length;
+  },
+  getTotalCards: (state) => {
+    if (!state.cards || !Array.isArray(state.cards)) {
+      return 0;
+    }
+    return state.cards.length;
+  },
   getAccuracyRate: (state) => {
+    if (!state.gameHistory || !Array.isArray(state.gameHistory)) {
+      return 0;
+    }
     const total = state.gameHistory.length;
-    const correct = state.correctAnswers.length;
+    const correct = state.correctAnswers ? state.correctAnswers.length : 0;
     return total > 0 ? Math.round((correct / total) * 100) : 0;
   },
   getCurrentHint: (state) => {
-    if (!state.currentCard) return null;
-    return state.currentCard.dicas[state.currentHintLevel - 1];
+    if (!state.currentCard || !state.currentCard.dicas) return null;
+    return state.currentCard.dicas[state.currentHintLevel - 1] || null;
   },
-  getRemainingAttempts: (state) => state.maxAttempts - state.attempts,
+  getRemainingAttempts: (state) => {
+    const maxAttempts = state.maxAttempts || 3;
+    const attempts = state.attempts || 0;
+    return Math.max(0, maxAttempts - attempts);
+  },
   isGameActive: (state) => state.gameStarted && !state.gameFinished,
 };
