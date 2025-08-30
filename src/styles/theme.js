@@ -122,6 +122,7 @@ export const globalStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
+    paddingTop: 0, // Remove any extra padding
   },
   centerContent: {
     flex: 1,

@@ -4,11 +4,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-  Dimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, typography, spacing, borderRadius, shadows, globalStyles } from '../styles/theme';
 
 const HomeScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const menuOptions = [
     {
       id: 'start',
@@ -70,7 +71,7 @@ const HomeScreen = ({ navigation }) => {
         </View>
 
         {/* Footer */}
-        <View style={styles.footer}>
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
           <Text style={styles.footerText}>
             Versão 1.0.0 • Desenvolvido para estudantes de saúde
           </Text>
@@ -160,7 +161,6 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
     alignItems: 'center',
   },
   footerText: {

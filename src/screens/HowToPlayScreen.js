@@ -6,9 +6,11 @@ import {
   SafeAreaView,
   TouchableOpacity,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, typography, spacing, borderRadius, shadows, globalStyles } from '../styles/theme';
 
 const HowToPlayScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const sections = [
     {
       title: '🎯 Objetivo do Jogo',
@@ -114,7 +116,7 @@ const HowToPlayScreen = ({ navigation }) => {
         </ScrollView>
 
         {/* Footer Button */}
-        <View style={styles.footer}>
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
           <TouchableOpacity
             style={globalStyles.button}
             onPress={() => navigation.goBack()}

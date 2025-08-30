@@ -7,10 +7,12 @@ import {
   ScrollView,
   FlatList,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGame, gameSelectors } from '../context/GameContext';
 import { colors, typography, spacing, borderRadius, shadows, globalStyles } from '../styles/theme';
 
 const ResultsScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const { state, dispatch, actions } = useGame();
 
   const currentPlayer = gameSelectors.getCurrentPlayer(state);
@@ -192,14 +194,14 @@ const ResultsScreen = ({ navigation }) => {
         </ScrollView>
 
         {/* Action Buttons */}
-        <View style={styles.footer}>
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
           <TouchableOpacity
             style={[globalStyles.button, styles.actionButton]}
             onPress={handlePlayAgain}
           >
             <Text style={globalStyles.buttonText}>Jogar Novamente</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={[globalStyles.button, globalStyles.secondaryButton, styles.actionButton]}
             onPress={handleGoHome}

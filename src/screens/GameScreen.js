@@ -10,11 +10,13 @@ import {
   Keyboard,
   ScrollView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGame, gameSelectors } from '../context/GameContext';
 import { cardsDatabase, validateAnswer } from '../data/cardsDatabase.js';
 import { colors, typography, spacing, borderRadius, shadows, globalStyles } from '../styles/theme';
 
 const GameScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const { state, dispatch, actions } = useGame();
   const [userAnswer, setUserAnswer] = useState('');
   const [isInputFocused, setIsInputFocused] = useState(false);
@@ -114,7 +116,7 @@ const GameScreen = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView style={globalStyles.safeArea}>
+    <SafeAreaView style={[globalStyles.safeArea, { paddingTop: Math.max(insets.top, spacing.md) }]}>
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
@@ -129,7 +131,7 @@ const GameScreen = ({ navigation }) => {
             </View>
             <View style={styles.scoreContainer}>
               <Text style={styles.scoreText}>
-                {gameSelectors.getTotalScore(state, currentPlayer)} pts
+                {gameSelectors.getTotalScore(state, currentPlayer) || 0} pts
               </Text>
             </View>
           </View>
@@ -195,7 +197,7 @@ const GameScreen = ({ navigation }) => {
         </ScrollView>
 
         {/* Input and Actions */}
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
           {!state.showExplanation ? (
             <>
               {/* Answer Input */}
@@ -267,7 +269,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: colors.background,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    paddingTop: spacing.xl, // Increased from spacing.md to give more space from top
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -276,41 +278,42 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md, // Increased spacing
   },
   exitButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36, // Increased from 32
+    height: 36, // Increased from 32
+    borderRadius: 18, // Adjusted for new size
     backgroundColor: colors.error,
     alignItems: 'center',
     justifyContent: 'center',
   },
   exitButtonText: {
     color: colors.textLight,
-    fontSize: 18,
+    fontSize: 20, // Increased from 18
     fontWeight: 'bold',
   },
   progressContainer: {
     backgroundColor: colors.backgroundAlt,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.lg, // Increased from spacing.md
+    paddingVertical: spacing.sm, // Increased from spacing.xs
     borderRadius: borderRadius.round,
   },
   progressText: {
-    ...typography.caption,
-    fontWeight: '600',
+    fontSize: 16, // Increased from caption size (14)
+    fontWeight: '700', // Increased from '600'
+    color: colors.text, // Changed from textSecondary for better visibility
   },
   scoreContainer: {
     backgroundColor: colors.primary,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.lg, // Increased from spacing.md
+    paddingVertical: spacing.sm, // Increased from spacing.xs
     borderRadius: borderRadius.round,
   },
   scoreText: {
-    ...typography.caption,
+    fontSize: 16, // Increased from caption size (14)
     color: colors.textLight,
-    fontWeight: '600',
+    fontWeight: '700', // Increased from '600'
   },
   playerInfo: {
     alignItems: 'center',

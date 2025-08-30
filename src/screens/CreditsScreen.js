@@ -7,13 +7,16 @@ import {
   ScrollView,
   Linking,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, typography, spacing, borderRadius, shadows, globalStyles } from '../styles/theme';
 
 const CreditsScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
+
   const teamMembers = [
     {
       name: 'Equipe de Desenvolvimento',
-      role: 'Desenvolvedores',
+      role: 'Gabriel,Rennan, Thiago e Vitoria',
       description: 'Responsáveis pela criação e implementação do aplicativo',
     },
     {
@@ -171,7 +174,7 @@ const CreditsScreen = ({ navigation }) => {
       </ScrollView>
 
       {/* Back Button */}
-      <View style={styles.backButtonContainer}>
+      <View style={[styles.backButtonContainer, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
         <TouchableOpacity
           style={globalStyles.button}
           onPress={() => navigation.goBack()}
@@ -191,7 +194,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl,
+    paddingTop: spacing.xl + 20, // add extra top padding
     paddingBottom: spacing.lg,
     backgroundColor: colors.backgroundAlt,
   },

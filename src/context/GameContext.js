@@ -56,10 +56,16 @@ const gameActions = {
 const gameReducer = (state, action) => {
   switch (action.type) {
     case gameActions.SET_GAME_MODE:
+      const initialPlayers = action.payload === 'individual' ? ['Jogador'] : [];
+      const initialScores = {};
+      initialPlayers.forEach(player => {
+        initialScores[player] = 0;
+      });
       return {
         ...state,
         gameMode: action.payload,
-        players: action.payload === 'individual' ? ['Jogador'] : [],
+        players: initialPlayers,
+        scores: initialScores, // Initialize scores immediately
       };
 
     case gameActions.SET_GAME_TYPE:
@@ -88,7 +94,7 @@ const gameReducer = (state, action) => {
 
     case gameActions.START_GAME:
       let gameCards = [];
-      
+
       if (state.gameType === 'rapido') {
         // Duelo rápido: 10 cartas aleatórias
         gameCards = shuffleCards(action.payload.allCards).slice(0, 10);
@@ -97,6 +103,14 @@ const gameReducer = (state, action) => {
         const categoryCards = getCardsByCategory(state.selectedCategory);
         gameCards = shuffleCards(categoryCards).slice(0, 15); // Máximo 15 cartas por categoria
       }
+
+      // Ensure scores are properly initialized
+      const ensuredScores = { ...state.scores };
+      state.players.forEach(player => {
+        if (!(player in ensuredScores)) {
+          ensuredScores[player] = 0;
+        }
+      });
 
       return {
         ...state,
@@ -109,6 +123,7 @@ const gameReducer = (state, action) => {
         gameFinished: false,
         correctAnswers: [],
         gameHistory: [],
+        scores: ensuredScores, // Ensure scores are properly set
       };
 
     case gameActions.NEXT_CARD:
@@ -139,15 +154,15 @@ const gameReducer = (state, action) => {
       const { answer, isCorrect } = action.payload;
       const currentPlayer = state.players[state.currentPlayerIndex];
       const newAttempts = state.attempts + 1;
-      
+
       if (isCorrect) {
         // Resposta correta
         const points = state.currentCard.dicas[state.currentHintLevel - 1].pontos;
         const newScores = {
           ...state.scores,
-          [currentPlayer]: state.scores[currentPlayer] + points,
+          [currentPlayer]: (state.scores[currentPlayer] || 0) + points,
         };
-        
+
         const answerRecord = {
           cardId: state.currentCard.id,
           question: state.currentCard.resposta,
@@ -283,6 +298,13 @@ export const useGame = () => {
 // Seletores úteis
 export const gameSelectors = {
   getCurrentPlayer: (state) => state.players[state.currentPlayerIndex],
+  getTotalScore: (state, player) => {
+    // Ensure we have a valid player and scores object
+    if (!player || !state.scores || typeof state.scores !== 'object') {
+      return 0;
+    }
+    return state.scores[player] || 0;
+  },
   getTotalScore: (state, player) => state.scores[player] || 0,
   getCorrectAnswersCount: (state) => state.correctAnswers.length,
   getTotalCards: (state) => state.cards.length,

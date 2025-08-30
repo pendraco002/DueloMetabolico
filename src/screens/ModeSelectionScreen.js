@@ -8,6 +8,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGame } from '../context/GameContext';
 import { colors, typography, spacing, borderRadius, shadows, globalStyles } from '../styles/theme';
 import { getCategories } from '../data/cardsDatabase.js';
@@ -15,6 +16,7 @@ import { getCategories } from '../data/cardsDatabase.js';
 // ... existing code ...
 
 const ModeSelectionScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const { dispatch, actions } = useGame();
   const [selectedMode, setSelectedMode] = useState(null);
   const [selectedType, setSelectedType] = useState(null);
@@ -63,9 +65,15 @@ const ModeSelectionScreen = ({ navigation }) => {
         Alert.alert('Atenção', 'Os nomes dos jogadores devem ser diferentes.');
         return;
       }
-      dispatch({ 
-        type: actions.SET_PLAYERS, 
-        payload: [player1Name.trim(), player2Name.trim()] 
+      dispatch({
+        type: actions.SET_PLAYERS,
+        payload: [player1Name.trim(), player2Name.trim()]
+      });
+    } else if (selectedMode === 'individual') {
+      // Ensure individual player is set
+      dispatch({
+        type: actions.SET_PLAYERS,
+        payload: ['Jogador']
       });
     }
 
@@ -211,7 +219,7 @@ const ModeSelectionScreen = ({ navigation }) => {
 
         {/* Start Button */}
         {selectedMode && selectedType && (
-          <View style={styles.footer}>
+          <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
             <TouchableOpacity
               style={globalStyles.button}
               onPress={handleStartGame}
@@ -220,7 +228,7 @@ const ModeSelectionScreen = ({ navigation }) => {
                 🎮 Iniciar Jogo
               </Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={[globalStyles.button, globalStyles.secondaryButton, styles.backButton]}
               onPress={() => navigation.goBack()}
